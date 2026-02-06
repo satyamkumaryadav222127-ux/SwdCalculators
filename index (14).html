@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>UniverseCalc PWA — All Calculators (Unique)</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b1020">
+  <link rel="icon" href="icon-192.png">
+
+  <style>
+    :root{
+      --bg:#070B18; --panel:rgba(255,255,255,.06); --panel2:rgba(255,255,255,.04);
+      --border:rgba(255,255,255,.12); --text:#EAF0FF; --muted:#A8B3D6;
+      --acc:#7C5CFF; --acc2:#23D5AB; --danger:#FF4D6D; --shadow:0 18px 60px rgba(0,0,0,.45);
+      --r:20px; --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+    [data-theme="light"]{
+      --bg:#F7F8FF; --panel:rgba(0,0,0,.05); --panel2:rgba(0,0,0,.03);
+      --border:rgba(0,0,0,.10); --text:#10152B; --muted:#4A567A; --shadow:0 18px 60px rgba(20,30,60,.20);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:var(--sans); color:var(--text); overflow-x:hidden;
+      background:
+        radial-gradient(1100px 650px at 15% 15%, rgba(124,92,255,.35), transparent 60%),
+        radial-gradient(900px 520px at 85% 20%, rgba(35,213,171,.22), transparent 58%),
+        radial-gradient(900px 520px at 50% 100%, rgba(255,77,109,.12), transparent 58%),
+        var(--bg);
+    }
+    a{color:inherit}
+    .top{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 70%,transparent);
+      backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+    .topbar{max-width:1200px;margin:0 auto;padding:12px 18px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:44px;height:44px;border-radius:16px;background:linear-gradient(135deg,var(--acc),var(--acc2));
+      display:grid;place-items:center;font-weight:1000;box-shadow:0 14px 30px rgba(124,92,255,.25)}
+    .brand h1{margin:0;font-size:14px;letter-spacing:.4px}
+    .brand p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .chip,.btn{
+      border:1px solid var(--border);background:var(--panel2);color:var(--text);
+      padding:10px 12px;border-radius:999px;font-weight:900;font-size:12px;cursor:pointer;user-select:none
+    }
+    .chip:hover,.btn:hover{box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 20%,transparent);
+      border-color:color-mix(in srgb,var(--acc) 60%,var(--border))}
+    .btn.primary{border:none;background:linear-gradient(135deg,var(--acc),#4aa3ff);box-shadow:0 14px 30px rgba(124,92,255,.25)}
+    .wrap{max-width:1200px;margin:0 auto;padding:18px}
+    .grid{display:grid;gap:16px;grid-template-columns:420px 1fr;align-items:start;margin-top:16px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+    .searchRow{display:flex;gap:10px;flex-wrap:wrap;padding:16px;border-bottom:1px solid var(--border)}
+    .search{flex:1;min-width:220px;display:flex;gap:10px;align-items:center;padding:12px;border-radius:16px;border:1px solid var(--border);
+      background:color-mix(in srgb,var(--bg) 55%,transparent)}
+    .search input{width:100%;border:none;outline:none;background:transparent;color:var(--text);font-weight:900}
+    .filterRow{display:flex;gap:10px;flex-wrap:wrap;padding:0 16px 16px}
+    .pill{padding:10px 12px;border-radius:999px;border:1px solid var(--border);background:var(--panel2);cursor:pointer;font-weight:900;font-size:12px}
+    .pill.active{border-color:color-mix(in srgb,var(--acc) 70%,var(--border));
+      box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 16%,transparent);
+      background:color-mix(in srgb,var(--acc) 10%,var(--panel2))}
+    .list{padding:10px;display:grid;gap:10px}
+    .item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-radius:16px;border:1px solid var(--border);
+      background:color-mix(in srgb,var(--panel2) 60%,transparent);cursor:pointer}
+    .item:hover{transform:translateY(-1px)}
+    .left{display:flex;align-items:center;gap:10px}
+    .ico{width:34px;height:34px;border-radius:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 60%,transparent),color-mix(in srgb,var(--acc2) 45%,transparent));
+      border:1px solid color-mix(in srgb,var(--border) 60%,transparent);display:grid;place-items:center;font-weight:1000}
+    .item strong{display:block;font-size:13px}
+    .item span{display:block;font-size:12px;color:var(--muted)}
+    .fav{width:40px;height:40px;border-radius:16px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-size:16px}
+    .fav.on{background:color-mix(in srgb,var(--acc2) 12%,transparent);border-color:color-mix(in srgb,var(--acc2) 55%,var(--border))}
+    .kbd{padding:12px 16px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;display:flex;gap:10px;flex-wrap:wrap;background:color-mix(in srgb,var(--panel2) 55%,transparent)}
+    kbd{font-family:var(--mono);font-weight:900;padding:4px 8px;border-radius:10px;border:1px solid var(--border);background:color-mix(in srgb,var(--bg) 55%,transparent);color:var(--text)}
+    .heroBanner{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border);
+      background:radial-gradient(700px 200px at 20% 0%, rgba(124,92,255,.22), transparent 65%),
+      radial-gradient(700px 200px at 100% 30%, rgba(35,213,171,.14), transparent 65%)}
+    .big{font-size:16px;font-weight:1000;margin:0}
+    .mini{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+    .badgeRow{display:flex;gap:10px;flex-wrap:wrap}
+    .badge{padding:10px 12px;border-radius:999px;border:1px solid var(--border);background:color-mix(in srgb,var(--panel2) 70%,transparent);font-weight:900;font-size:12px}
+    .panel{padding:16px}
+    .panelTitle{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between}
+    .panelTitle h2{margin:0;font-size:18px}
+    .panelTitle p{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+    .miniBtns{display:flex;gap:10px;flex-wrap:wrap}
+    .miniBtns .btn{border-radius:14px}
+    .box{margin-top:12px;padding:14px;border-radius:18px;border:1px solid var(--border);background:color-mix(in srgb,var(--panel2) 70%,transparent)}
+    .row2{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+    @media (max-width:740px){.row2{grid-template-columns:1fr}}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:900}
+    input, select{
+      width:100%;padding:12px;border-radius:14px;border:1px solid var(--border);
+      background:color-mix(in srgb,var(--bg) 55%,transparent);color:var(--text);outline:none;font-weight:900
+    }
+    input:focus,select:focus{border-color:color-mix(in srgb,var(--acc) 70%,var(--border));
+      box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 16%,transparent)}
+    .btnRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .btn.danger{background:color-mix(in srgb,var(--danger) 12%,transparent);border-color:color-mix(in srgb,var(--danger) 50%,var(--border))}
+    .result{margin-top:12px;padding:12px;border-radius:16px;border:1px solid color-mix(in srgb,var(--acc2) 35%,var(--border));
+      background:color-mix(in srgb,var(--acc2) 10%,transparent);font-weight:1000;font-family:var(--mono);overflow:auto;min-height:44px}
+    .keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+    .key{padding:14px 10px;border-radius:16px;border:1px solid var(--border);background:color-mix(in srgb,var(--panel2) 75%,transparent);cursor:pointer;font-weight:1000;text-align:center}
+    .key.op{background:color-mix(in srgb,var(--acc) 12%,transparent);border-color:color-mix(in srgb,var(--acc) 45%,var(--border))}
+    .key.eq{background:linear-gradient(135deg,var(--acc),#4aa3ff);border:none}
+    .key.dng{background:color-mix(in srgb,var(--danger) 10%,transparent);border-color:color-mix(in srgb,var(--danger) 50%,var(--border))}
+    .drawer{
+      position:fixed; right:16px; bottom:16px; width:min(380px,calc(100vw - 32px)); max-height:60vh;
+      display:none; border-radius:22px; border:1px solid var(--border);
+      background:color-mix(in srgb,var(--bg) 65%,transparent); backdrop-filter:blur(12px); box-shadow:var(--shadow);
+      overflow:hidden; z-index:60;
+    }
+    .drawerHead{padding:12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--panel) 65%,transparent)}
+    .drawerBody{padding:10px;overflow:auto}
+    .hitem{padding:10px;border-radius:16px;border:1px solid var(--border);background:color-mix(in srgb,var(--panel2) 75%,transparent);margin-bottom:10px;cursor:pointer}
+    .hitem small{display:block;color:var(--muted);font-family:var(--mono);margin-top:6px}
+    .modalBack{position:fixed;inset:0;display:none;place-items:center;padding:18px;background:rgba(0,0,0,.55);z-index:80}
+    .modal{width:min(560px,96vw);border-radius:22px;border:1px solid var(--border);
+      background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 85%,transparent),color-mix(in srgb,var(--bg) 65%,transparent));
+      backdrop-filter:blur(10px);box-shadow:var(--shadow);overflow:hidden}
+    .modalTop{padding:14px;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border)}
+    .modalTop h3{margin:0;font-size:15px}
+    .modalTop p{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .close{width:40px;height:40px;border-radius:16px;border:1px solid var(--border);background:var(--panel2);cursor:pointer;font-size:16px;color:var(--text)}
+    .modalBody{padding:14px}
+    .linkBox{padding:12px;border-radius:16px;border:1px solid color-mix(in srgb,var(--acc) 35%,var(--border));background:color-mix(in srgb,var(--acc) 10%,transparent);word-break:break-all;font-weight:1000}
+    .footer{padding:14px 16px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center;background:color-mix(in srgb,var(--panel2) 60%,transparent)}
+    canvas{width:100%;height:320px;border-radius:16px;border:1px solid var(--border);background:color-mix(in srgb,var(--bg) 55%,transparent)}
+  </style>
+</head>
+
+<body data-theme="dark">
+  <div class="top">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">SWD</div>
+        <div>
+          <h1>UniverseCalc PWA — All Calculators in One</h1>
+          <p>Powered by <b>Satyam Web Design Pvt. Ltd</b> • Installable • Offline • Voice • Graph</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="chip" id="btnInstall" style="display:none">📲 Install</button>
+        <button class="chip" id="btnTheme">🌗 Theme</button>
+        <button class="chip" id="btnHistory">🧾 History</button>
+        <button class="btn primary" id="btnPopup">Thank You</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="grid">
+      <!-- LEFT -->
+      <div class="card">
+        <div class="searchRow">
+          <div class="search" title="Search calculators (Ctrl + K)">
+            <b style="font-family:var(--mono)">⌕</b>
+            <input id="q" placeholder="Search… (EMI, GST, Graph, BMI, Date)" autocomplete="off" />
+            <span style="color:var(--muted);font-family:var(--mono);font-weight:900">Ctrl K</span>
+          </div>
+        </div>
+        <div class="filterRow" id="filters"></div>
+        <div class="list" id="list"></div>
+        <div class="kbd">
+          <span><kbd>Ctrl</kbd>+<kbd>K</kbd> Search</span>
+          <span><kbd>H</kbd> History</span>
+          <span><kbd>F</kbd> Favorite</span>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="card">
+        <div class="heroBanner">
+          <div>
+            <p class="big" id="heroName">Basic Calculator</p>
+            <p class="mini" id="heroDesc">Unique interface: Universe Map + Live panel. Works offline as PWA.</p>
+          </div>
+          <div class="badgeRow">
+            <span class="badge" id="badgeCat">Core</span>
+            <span class="badge" id="badgeHint">Hint: 12+34*2</span>
+            <span class="badge" id="badgeNet">Offline-ready</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panelTitle">
+            <div>
+              <h2 id="panelTitle">Basic Calculator</h2>
+              <p id="panelSub">Expression + keypad + voice input (where supported).</p>
+            </div>
+            <div class="miniBtns">
+              <button class="btn" id="btnVoice">🎙 Voice</button>
+              <button class="btn" id="btnFav">☆ Favorite</button>
+              <button class="btn" id="btnCopy">📋 Copy Result</button>
+              <button class="btn danger" id="btnReset">Reset</button>
+            </div>
+          </div>
+
+          <div id="panelHost" class="box"></div>
+
+          <div class="footer">
+            <div><b style="color:var(--text)">Satyam Web Design Pvt. Ltd</b> • UniverseCalc</div>
+            <div><a href="https://satyamyadav1691126199.website3.me/" target="_blank" rel="noopener">Official Link</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY DRAWER -->
+  <div class="drawer" id="drawer">
+    <div class="drawerHead">
+      <b>🧾 Calculation History</b>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="chip" id="btnClearHistory">Clear</button>
+        <button class="chip" id="btnCloseHistory">Close</button>
+      </div>
+    </div>
+    <div class="drawerBody" id="historyBody"></div>
+  </div>
+
+  <!-- THANK YOU POPUP -->
+  <div class="modalBack" id="modalBack" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modalTop">
+        <div>
+          <h3>Thank you for connecting</h3>
+          <p><b style="color:var(--text)">Satyam Web Design Pvt. Ltd</b></p>
+        </div>
+        <button class="close" id="btnCloseModal">✕</button>
+      </div>
+      <div class="modalBody">
+        <div class="linkBox">https://satyamyadav1691126199.website3.me/</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px">
+          <button class="btn" id="btnOpenLink">Open Link</button>
+          <button class="btn" id="btnCopyLink">Copy Link</button>
+        </div>
+      </div>
+      <div class="footer">
+        <span>PWA + Offline + Voice + Graph</span>
+        <span>UniverseCalc v2</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ---------- PWA Service Worker ----------
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  }
+
+  // ---------- Install Prompt ----------
+  let deferredPrompt = null;
+  const btnInstall = document.getElementById("btnInstall");
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    btnInstall.style.display = "inline-block";
+  });
+  btnInstall.addEventListener("click", async () => {
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    btnInstall.style.display = "none";
+  });
+
+  // ---------- Storage ----------
+  const store = {
+    get(k, fb){ try{ return JSON.parse(localStorage.getItem(k)) ?? fb }catch{ return fb } },
+    set(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
+  };
+
+  // ---------- Data ----------
+  const CALCS = [
+    { id:"basic", name:"Basic Calculator", cat:"Core", icon:"＋", hint:"12+34*2", desc:"Expression + keypad + safe evaluator." },
+    { id:"gst", name:"GST Calculator", cat:"Finance", icon:"₹", hint:"1000 @18%", desc:"Add GST or remove GST." },
+    { id:"emi", name:"EMI Calculator", cat:"Finance", icon:"⟠", hint:"Loan+Rate+Months", desc:"Monthly EMI + interest + total." },
+    { id:"bmi", name:"BMI Calculator", cat:"Health", icon:"♡", hint:"70kg 170cm", desc:"BMI + category." },
+    { id:"age", name:"Age Calculator", cat:"Date", icon:"⏳", hint:"DOB → Age", desc:"Years, months, days." },
+    { id:"graph", name:"Graph Plotter", cat:"Tools", icon:"📈", hint:"y = x*x", desc:"Plot y=f(x) with live canvas." },
+  ];
+  const CATS = ["All","Favorites","Core","Finance","Health","Date","Tools"];
+
+  // ---------- State ----------
+  let favorites = new Set(store.get("swd_favs2", []));
+  let history = store.get("swd_hist2", []);
+  let activeId = store.get("swd_active2", "basic");
+  let activeCat = "All";
+  let lastResultText = "";
+
+  // ---------- Helpers ----------
+  const $ = (id) => document.getElementById(id);
+  const escapeHtml = (s)=> String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  const toast = (msg)=>{ console.log(msg); }; // (kept minimal)
+
+  function addHistory(calcId, title, input, output){
+    history.push({ts:Date.now(), calcId, title, input, output});
+    if(history.length>200) history = history.slice(-200);
+    store.set("swd_hist2", history);
+  }
+  function renderHistory(){
+    const host = $("historyBody");
+    host.innerHTML = "";
+    if(history.length===0){
+      host.innerHTML = `<div style="padding:10px;color:var(--muted);font-weight:900">No history yet.</div>`;
+      return;
+    }
+    history.slice().reverse().slice(0,80).forEach(h=>{
+      const dt = new Date(h.ts);
+      const div = document.createElement("div");
+      div.className = "hitem";
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <b>${escapeHtml(h.title)}</b>
+          <span style="color:var(--muted);font-size:12px">${dt.toLocaleString()}</span>
+        </div>
+        <small>Input: ${escapeHtml(h.input)}</small>
+        <small>Output: ${escapeHtml(h.output)}</small>
+      `;
+      div.onclick = ()=> openCalc(h.calcId);
+      host.appendChild(div);
+    });
+  }
+
+  // ---------- Popup ----------
+  function showPopup(){ $("modalBack").style.display = "grid"; }
+  function hidePopup(){ $("modalBack").style.display = "none"; }
+
+  // ---------- Theme ----------
+  let theme = store.get("swd_theme2", "dark");
+  function applyTheme(t){
+    theme = t;
+    document.body.setAttribute("data-theme", theme);
+    store.set("swd_theme2", theme);
+  }
+
+  // ---------- Voice Input (Web Speech API) ----------
+  let recog = null;
+  function setupVoice(){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR) return null;
+    const r = new SR();
+    r.lang = "en-IN"; // change if you want
+    r.interimResults = false;
+    r.maxAlternatives = 1;
+    return r;
+  }
+
+  function startVoice(){
+    if(!recog) recog = setupVoice();
+    if(!recog){
+      alert("Voice input not supported in this browser.");
+      return;
+    }
+    alert("Speak like: '12 plus 30', '1000 at 18 percent', 'plot x square'");
+    recog.onresult = (e)=>{
+      const text = e.results[0][0].transcript.toLowerCase();
+      handleVoiceText(text);
+    };
+    recog.onerror = ()=>{};
+    recog.start();
+  }
+
+  function handleVoiceText(t){
+    // basic replacements to math expression
+    let expr = t
+      .replaceAll("plus","+")
+      .replaceAll("minus","-")
+      .replaceAll("into","*")
+      .replaceAll("times","*")
+      .replaceAll("multiply by","*")
+      .replaceAll("divided by","/")
+      .replaceAll("divide by","/")
+      .replaceAll("percent","%")
+      .replaceAll("point",".");
+
+    // if currently in basic, fill expression
+    const ex = document.getElementById("expr");
+    if(ex){
+      ex.value = expr.replaceAll(" ", "");
+      return;
+    }
+    // if gst panel, try parse: "1000 at 18 percent"
+    const gAmt = document.getElementById("gAmt");
+    const gRate = document.getElementById("gRate");
+    if(gAmt && gRate){
+      const m = t.match(/(\d+)\s*(?:at|@)\s*(\d+)\s*percent/);
+      if(m){ gAmt.value = m[1]; gRate.value = m[2]; }
+      return;
+    }
+  }
+
+  // ---------- Safe Eval ----------
+  function safeEval(expr){
+    let s = String(expr).trim();
+    if(!s) throw new Error("Empty");
+    s = s.replaceAll("×","*").replaceAll("÷","/");
+    const allowed = /^[0-9+\-*/().,%\s]*$/;
+    if(!allowed.test(s)) throw new Error("Invalid");
+    // eslint-disable-next-line no-new-func
+    const fn = Function(`"use strict"; return (${s});`);
+    const out = fn();
+    if(!isFinite(out)) throw new Error("Not finite");
+    return out;
+  }
+
+  // ---------- UI List ----------
+  function buildFilters(){
+    const host = $("filters"); host.innerHTML="";
+    CATS.forEach(cat=>{
+      const b = document.createElement("button");
+      b.className = "pill"+(cat===activeCat?" active":"");
+      b.textContent = cat;
+      b.onclick = ()=>{ activeCat=cat; buildFilters(); renderList(); };
+      host.appendChild(b);
+    });
+  }
+  function getVisibleCalcs(){
+    const q = $("q").value.trim().toLowerCase();
+    let arr = CALCS.slice();
+    if(activeCat==="Favorites") arr = arr.filter(c=>favorites.has(c.id));
+    else if(activeCat!=="All") arr = arr.filter(c=>c.cat===activeCat);
+    if(q) arr = arr.filter(c => (c.name+" "+c.cat+" "+c.desc).toLowerCase().includes(q));
+    return arr;
+  }
+  function toggleFav(id){
+    if(favorites.has(id)) favorites.delete(id); else favorites.add(id);
+    store.set("swd_favs2", Array.from(favorites));
+  }
+  function renderList(){
+    const host = $("list"); host.innerHTML="";
+    const arr = getVisibleCalcs();
+    if(arr.length===0){
+      host.innerHTML = `<div style="padding:14px;color:var(--muted);font-weight:900">No results.</div>`;
+      return;
+    }
+    arr.forEach(c=>{
+      const row = document.createElement("div");
+      row.className="item";
+      if(c.id===activeId) row.style.borderColor="color-mix(in srgb, var(--acc) 65%, var(--border))";
+      row.innerHTML = `
+        <div class="left">
+          <div class="ico">${c.icon}</div>
+          <div><strong>${c.name}</strong><span>${c.cat} • ${c.desc}</span></div>
+        </div>
+        <button class="fav ${favorites.has(c.id)?"on":""}">★</button>
+      `;
+      row.onclick = (e)=>{ if(e.target.classList.contains("fav")) return; openCalc(c.id); };
+      row.querySelector(".fav").onclick = (e)=>{ e.stopPropagation(); toggleFav(c.id); renderList(); syncFavBtn(); };
+      host.appendChild(row);
+    });
+  }
+  function syncFavBtn(){
+    const on = favorites.has(activeId);
+    $("btnFav").textContent = on ? "★ Favorited" : "☆ Favorite";
+  }
+
+  // ---------- Panels ----------
+  function renderPanel(id){
+    const host = $("panelHost");
+    host.innerHTML = "";
+    lastResultText = "";
+
+    $("btnReset").onclick = ()=> renderPanel(activeId);
+    $("btnFav").onclick = ()=>{ toggleFav(activeId); renderList(); syncFavBtn(); };
+    $("btnCopy").onclick = async ()=>{
+      if(!lastResultText) return alert("No result to copy");
+      try{ await navigator.clipboard.writeText(lastResultText); alert("Copied"); }catch{ alert("Copy failed"); }
+    };
+
+    if(id==="basic") return panelBasic(host);
+    if(id==="gst") return panelGST(host);
+    if(id==="emi") return panelEMI(host);
+    if(id==="bmi") return panelBMI(host);
+    if(id==="age") return panelAge(host);
+    if(id==="graph") return panelGraph(host);
+
+    host.innerHTML = `<div style="color:var(--muted);font-weight:900">Coming soon.</div>`;
+  }
+
+  function panelBasic(host){
+    host.innerHTML = `
+      <div class="row2">
+        <div>
+          <label>Expression</label>
+          <input id="expr" placeholder="e.g., (12+34)*2-5/2" />
+        </div>
+        <div>
+          <label>Result</label>
+          <div class="result" id="res">—</div>
+        </div>
+      </div>
+      <div class="keypad">
+        ${["7","8","9","÷","4","5","6","×","1","2","3","-","0",".","(",")","%","C","⌫","+","="].map(k=>{
+          let cls="key";
+          if(["÷","×","-","+","%"].includes(k)) cls+=" op";
+          if(k==="=") cls+=" eq";
+          if(k==="C"||k==="⌫") cls+=" dng";
+          return `<div class="${cls}" data-k="${k}">${k}</div>`;
+        }).join("")}
+      </div>
+      <div class="btnRow">
+        <button class="btn primary" id="doCalc">Calculate</button>
+        <button class="btn" id="saveCalc">Save</button>
+      </div>
+    `;
+    const expr = $("expr"), res = $("res");
+
+    function compute(){
+      try{
+        const out = safeEval(expr.value);
+        res.textContent = String(out);
+        lastResultText = String(out);
+        return lastResultText;
+      }catch(e){
+        res.textContent = "Error";
+        lastResultText = "";
+        return null;
+      }
+    }
+
+    host.querySelectorAll(".key").forEach(btn=>{
+      btn.onclick = ()=>{
+        const k = btn.dataset.k;
+        if(k==="C"){ expr.value=""; res.textContent="—"; lastResultText=""; return; }
+        if(k==="⌫"){ expr.value = expr.value.slice(0,-1); return; }
+        if(k==="="){ compute(); return; }
+        expr.value += k;
+        expr.focus();
+      };
+    });
+
+    $("doCalc").onclick = ()=>{
+      const out = compute();
+      if(out!==null) addHistory("basic","Basic Calculator", expr.value, out);
+    };
+    $("saveCalc").onclick = ()=>{
+      if(!lastResultText) return alert("Calculate first");
+      addHistory("basic","Basic Calculator", expr.value, lastResultText);
+    };
+  }
+
+  function panelGST(host){
+    host.innerHTML = `
+      <div class="row2">
+        <div><label>Amount (₹)</label><input id="gAmt" type="number" placeholder="1000"></div>
+        <div><label>GST (%)</label><input id="gRate" type="number" placeholder="18"></div>
+      </div>
+      <div class="btnRow">
+        <button class="btn primary" id="gAdd">Add GST</button>
+        <button class="btn" id="gRem">Remove GST</button>
+      </div>
+      <div class="result" id="gRes">—</div>
+    `;
+    const res = $("gRes");
+    $("gAdd").onclick = ()=>{
+      const a = Number($("gAmt").value), r = Number($("gRate").value)/100;
+      if(!(isFinite(a)&&a>0&&isFinite(r))) return res.textContent="Error";
+      const gst = a*r, total=a+gst;
+      const out = `GST ₹${gst.toFixed(2)} | Total ₹${total.toFixed(2)}`;
+      res.textContent=out; lastResultText=out; addHistory("gst","GST Calculator","Add GST",out);
+    };
+    $("gRem").onclick = ()=>{
+      const t = Number($("gAmt").value), r = Number($("gRate").value)/100;
+      if(!(isFinite(t)&&t>0&&isFinite(r))) return res.textContent="Error";
+      const base = t/(1+r), gst=t-base;
+      const out = `Base ₹${base.toFixed(2)} | GST ₹${gst.toFixed(2)}`;
+      res.textContent=out; lastResultText=out; addHistory("gst","GST Calculator","Remove GST",out);
+    };
+  }
+
+  function panelEMI(host){
+    host.innerHTML = `
+      <div class="row2">
+        <div><label>Loan (₹)</label><input id="eP" type="number" placeholder="500000"></div>
+        <div><label>Annual Rate (%)</label><input id="eR" type="number" placeholder="10.5"></div>
+      </div>
+      <div class="row2" style="margin-top:10px">
+        <div><label>Months</label><input id="eN" type="number" placeholder="60"></div>
+        <div><label>Result</label><div class="result" id="eRes">—</div></div>
+      </div>
+      <div class="btnRow"><button class="btn primary" id="eCalc">Calculate EMI</button></div>
+    `;
+    const res = $("eRes");
+    $("eCalc").onclick = ()=>{
+      const P=Number($("eP").value), annual=Number($("eR").value), N=Number($("eN").value);
+      if(!(isFinite(P)&&P>0&&isFinite(annual)&&annual>=0&&isFinite(N)&&N>0)) return res.textContent="Error";
+      const r=(annual/12)/100;
+      const emi = (r===0) ? (P/N) : (P*r*Math.pow(1+r,N))/(Math.pow(1+r,N)-1);
+      const total = emi*N;
+      const interest = total - P;
+      const out = `EMI ₹${emi.toFixed(2)} | Total ₹${total.toFixed(2)} | Interest ₹${interest.toFixed(2)}`;
+      res.textContent=out; lastResultText=out; addHistory("emi","EMI Calculator","EMI",out);
+    };
+  }
+
+  function panelBMI(host){
+    host.innerHTML = `
+      <div class="row2">
+        <div><label>Weight (kg)</label><input id="bW" type="number" placeholder="70"></div>
+        <div><label>Height (cm)</label><input id="bH" type="number" placeholder="170"></div>
+      </div>
+      <div class="btnRow"><button class="btn primary" id="bCalc">Calculate BMI</button></div>
+      <div class="result" id="bRes">—</div>
+    `;
+    const res=$("bRes");
+    $("bCalc").onclick=()=>{
+      const w=Number($("bW").value), h=Number($("bH").value);
+      if(!(isFinite(w)&&w>0&&isFinite(h)&&h>0)) return res.textContent="Error";
+      const hm=h/100, bmi=w/(hm*hm);
+      let cat="Normal"; if(bmi<18.5) cat="Underweight"; else if(bmi<25) cat="Normal"; else if(bmi<30) cat="Overweight"; else cat="Obese";
+      const out=`BMI ${bmi.toFixed(2)} (${cat})`;
+      res.textContent=out; lastResultText=out; addHistory("bmi","BMI Calculator","BMI",out);
+    };
+  }
+
+  function panelAge(host){
+    host.innerHTML=`
+      <div class="row2">
+        <div><label>Date of Birth</label><input id="aDob" type="date"></div>
+        <div><label>As Of</label><input id="aAs" type="date"></div>
+      </div>
+      <div class="btnRow"><button class="btn primary" id="aCalc">Calculate</button></div>
+      <div class="result" id="aRes">—</div>
+    `;
+    $("aAs").value = new Date().toISOString().slice(0,10);
+    const res=$("aRes");
+    $("aCalc").onclick=()=>{
+      const dob=$("aDob").value, as=$("aAs").value;
+      if(!dob) return res.textContent="Select DOB";
+      const d1=new Date(dob), d2=new Date(as);
+      if(d2<d1) return res.textContent="As Of must be after DOB";
+      let y=d2.getFullYear()-d1.getFullYear(), m=d2.getMonth()-d1.getMonth(), d=d2.getDate()-d1.getDate();
+      if(d<0){ m-=1; d += new Date(d2.getFullYear(), d2.getMonth(), 0).getDate(); }
+      if(m<0){ y-=1; m+=12; }
+      const out=`Age: ${y}y ${m}m ${d}d`;
+      res.textContent=out; lastResultText=out; addHistory("age","Age Calculator", `${dob} → ${as}`, out);
+    };
+  }
+
+  // Graph Plotter (Unique)
+  function panelGraph(host){
+    host.innerHTML = `
+      <div class="row2">
+        <div>
+          <label>Function f(x)</label>
+          <input id="fx" placeholder="Examples: x*x  |  Math.sin(x)  |  x*2+1" value="x*x">
+          <div class="mini" style="margin-top:8px">
+            Use JavaScript math: <span style="font-family:var(--mono)">Math.sin(x), Math.cos(x), Math.sqrt(...)</span>
+          </div>
+        </div>
+        <div>
+          <label>Range</label>
+          <div class="row2">
+            <div><input id="xmin" type="number" value="-10"></div>
+            <div><input id="xmax" type="number" value="10"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btnRow">
+        <button class="btn primary" id="plot">Plot</button>
+        <button class="btn" id="savePlot">Save</button>
+      </div>
+
+      <canvas id="cv" width="900" height="420"></canvas>
+      <div class="result" id="gRes">Tip: press Plot to draw graph.</div>
+    `;
+
+    const cv = $("cv");
+    const ctx = cv.getContext("2d");
+    const res = $("gRes");
+
+    function drawAxes(xmin, xmax, ymin, ymax){
+      ctx.clearRect(0,0,cv.width,cv.height);
+      // axes
+      const toX = (x)=> (x - xmin) / (xmax - xmin) * cv.width;
+      const toY = (y)=> cv.height - (y - ymin) / (ymax - ymin) * cv.height;
+
+      // grid
+      ctx.globalAlpha = 0.25;
+      ctx.beginPath();
+      for(let i=0;i<=10;i++){
+        const x = i/10*cv.width;
+        ctx.moveTo(x,0); ctx.lineTo(x,cv.height);
+      }
+      for(let i=0;i<=10;i++){
+        const y = i/10*cv.height;
+        ctx.moveTo(0,y); ctx.lineTo(cv.width,y);
+      }
+      ctx.stroke();
+
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      // x-axis y=0
+      if(0>=ymin && 0<=ymax){
+        const y0 = toY(0);
+        ctx.moveTo(0,y0); ctx.lineTo(cv.width,y0);
+      }
+      // y-axis x=0
+      if(0>=xmin && 0<=xmax){
+        const x0 = toX(0);
+        ctx.moveTo(x0,0); ctx.lineTo(x0,cv.height);
+      }
+      ctx.stroke();
+      return {toX,toY};
+    }
+
+    function plot(){
+      const fxText = $("fx").value.trim();
+      const xmin = Number($("xmin").value), xmax = Number($("xmax").value);
+      if(!(isFinite(xmin)&&isFinite(xmax)&&xmax>xmin)) { res.textContent="Invalid range"; return; }
+
+      let f;
+      try{
+        // eslint-disable-next-line no-new-func
+        f = Function("x", `"use strict"; return (${fxText});`);
+        // test
+        f(0);
+      }catch{
+        res.textContent="Invalid function";
+        return;
+      }
+
+      // sample points to find y-range
+      let ymin = Infinity, ymax = -Infinity;
+      const pts = [];
+      for(let i=0;i<=600;i++){
+        const x = xmin + (xmax-xmin)*i/600;
+        let y;
+        try{ y = f(x); }catch{ y = NaN; }
+        if(isFinite(y)){
+          ymin = Math.min(ymin,y);
+          ymax = Math.max(ymax,y);
+        }
+        pts.push({x,y});
+      }
+      if(!isFinite(ymin) || !isFinite(ymax) || ymin===ymax){
+        ymin = -1; ymax = 1;
+      }
+      const pad = (ymax-ymin)*0.15 || 1;
+      ymin -= pad; ymax += pad;
+
+      const {toX,toY} = drawAxes(xmin,xmax,ymin,ymax);
+
+      // curve
+      ctx.beginPath();
+      let started=false;
+      for(const p of pts){
+        if(!isFinite(p.y)) { started=false; continue; }
+        const X = toX(p.x), Y = toY(p.y);
+        if(!started){ ctx.moveTo(X,Y); started=true; }
+        else ctx.lineTo(X,Y);
+      }
+      ctx.stroke();
+
+      const out = `Plotted: f(x) = ${fxText} | x:[${xmin}, ${xmax}]`;
+      res.textContent = out;
+      lastResultText = out;
+      addHistory("graph","Graph Plotter", `f(x)=${fxText}`, out);
+    }
+
+    $("plot").onclick = plot;
+    $("savePlot").onclick = ()=>{
+      if(!lastResultText) return alert("Plot first");
+      addHistory("graph","Graph Plotter", $("fx").value, lastResultText);
+      alert("Saved to history");
+    };
+
+    plot();
+  }
+
+  // ---------- Open Calc ----------
+  function openCalc(id){
+    const c = CALCS.find(x=>x.id===id) || CALCS[0];
+    activeId = c.id;
+    store.set("swd_active2", activeId);
+
+    $("heroName").textContent = c.name;
+    $("heroDesc").textContent = c.desc;
+    $("badgeCat").textContent = c.cat;
+    $("badgeHint").textContent = "Hint: " + c.hint;
+
+    $("panelTitle").textContent = c.name;
+    $("panelSub").textContent = c.desc;
+
+    renderPanel(c.id);
+    renderList();
+    syncFavBtn();
+  }
+
+  // ---------- History Drawer ----------
+  function openHistory(){ $("drawer").style.display="block"; renderHistory(); }
+  function closeHistory(){ $("drawer").style.display="none"; }
+
+  // ---------- Init ----------
+  function init(){
+    // network badge
+    const updateNet = ()=>{
+      $("badgeNet").textContent = navigator.onLine ? "Online" : "Offline";
+    };
+    window.addEventListener("online", updateNet);
+    window.addEventListener("offline", updateNet);
+    updateNet();
+
+    // filters & list
+    buildFilters();
+    $("q").addEventListener("input", renderList);
+
+    // theme
+    applyTheme(theme);
+    $("btnTheme").onclick = ()=>{ applyTheme(theme==="dark"?"light":"dark"); };
+
+    // popup
+    $("btnPopup").onclick = showPopup;
+    $("btnCloseModal").onclick = hidePopup;
+    $("modalBack").addEventListener("click", (e)=>{ if(e.target===$("modalBack")) hidePopup(); });
+    $("btnOpenLink").onclick = ()=> window.open("https://satyamyadav1691126199.website3.me/","_blank");
+    $("btnCopyLink").onclick = async ()=>{
+      try{ await navigator.clipboard.writeText("https://satyamyadav1691126199.website3.me/"); alert("Copied"); }catch{ alert("Copy failed"); }
+    };
+
+    // history
+    $("btnHistory").onclick = ()=> $("drawer").style.display==="block" ? closeHistory() : openHistory();
+    $("btnCloseHistory").onclick = closeHistory;
+    $("btnClearHistory").onclick = ()=>{ history=[]; store.set("swd_hist2", history); renderHistory(); };
+
+    // voice
+    $("btnVoice").onclick = startVoice;
+
+    // auto popup once per day
+    const day = new Date().toISOString().slice(0,10);
+    if(store.get("swd_popup_day2","") !== day){
+      setTimeout(()=>{ showPopup(); store.set("swd_popup_day2", day); }, 3000);
+    }
+
+    // shortcuts
+    window.addEventListener("keydown",(e)=>{
+      const ctrlK = (e.ctrlKey || e.metaKey) && e.key.toLowerCase()==="k";
+      if(ctrlK){ e.preventDefault(); $("q").focus(); $("q").select(); }
+      if(e.key.toLowerCase()==="h") openHistory();
+      if(e.key.toLowerCase()==="f"){ toggleFav(activeId); renderList(); syncFavBtn(); }
+    });
+
+    // start
+    renderList();
+    openCalc(activeId);
+  }
+
+  init();
+</script>
+</body>
+</html>
